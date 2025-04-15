@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Order Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Restaurant Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tables">Tables</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/orders">Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/menu">Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">Inventory</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reservations">Reservations</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Order Details -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">Order Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h5>Order Information</h5>
+                                <p><strong>Order ID:</strong> <span th:text="${order.id}">1</span></p>
+                                <p><strong>Table:</strong> <span th:text="'Table ' + ${order.table.tableNumber}">Table 1</span></p>
+                                <p><strong>Time:</strong> <span th:text="${#temporals.format(order.orderTime, 'HH:mm')}">12:00</span></p>
+                                <p>
+                                    <strong>Status:</strong>
+                                    <span th:class="${'badge ' + 
+                                        (order.status == T(com.restaurant.model.Order.OrderStatus).PENDING ? 'bg-warning' : 
+                                        (order.status == T(com.restaurant.model.Order.OrderStatus).COMPLETED ? 'bg-success' : 'bg-danger'))}"
+                                          th:text="${order.status}">Pending</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Customer Information</h5>
+                                <p><strong>Name:</strong> <span th:text="${order.customerName}">John Doe</span></p>
+                                <p><strong>Phone:</strong> <span th:text="${order.customerPhone}">123-456-7890</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <h5>Order Items</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Subtotal</th>
+                                        <th>Special Instructions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item : ${order.items}">
+                                        <td th:text="${item.menuItem.name}">Item Name</td>
+                                        <td th:text="${item.quantity}">1</td>
+                                        <td th:text="${'$' + #numbers.formatDecimal(item.unitPrice, 1, 2)}">$0.00</td>
+                                        <td th:text="${'$' + #numbers.formatDecimal(item.subtotal, 1, 2)}">$0.00</td>
+                                        <td th:text="${item.specialInstructions}">None</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                        <td th:text="${'$' + #numbers.formatDecimal(order.totalAmount, 1, 2)}">$0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Add Item Form -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Add Item</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/orders/{id}/items(id=${order.id})}" method="post">
+                            <div class="mb-3">
+                                <label for="menuItem" class="form-label">Menu Item</label>
+                                <select class="form-select" id="menuItem" name="menuItem" required>
+                                    <option value="">Select an item</option>
+                                    <option th:each="item : ${menuItems}"
+                                            th:value="${item.id}"
+                                            th:text="${item.name + ' - $' + #numbers.formatDecimal(item.price, 1, 2)}">
+                                        Item Name - $0.00
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="specialInstructions" class="form-label">Special Instructions</label>
+                                <textarea class="form-control" id="specialInstructions" name="specialInstructions" rows="2"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Add Item</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Order Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Order Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <form th:action="@{/orders/{id}/status(id=${order.id})}" method="post" class="d-inline">
+                                <input type="hidden" name="status" value="COMPLETED">
+                                <button type="submit" class="btn btn-success w-100">Complete Order</button>
+                            </form>
+                            <form th:action="@{/orders/{id}/status(id=${order.id})}" method="post" class="d-inline">
+                                <input type="hidden" name="status" value="CANCELLED">
+                                <button type="submit" class="btn btn-danger w-100">Cancel Order</button>
+                            </form>
+                            <a href="/orders" class="btn btn-secondary w-100">Back to Orders</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

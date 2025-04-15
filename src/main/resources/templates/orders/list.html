@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Order Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Restaurant Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tables">Tables</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/orders">Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/menu">Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">Inventory</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reservations">Reservations</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Order Management</h2>
+            <a href="/orders/new" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> New Order
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Table</th>
+                                        <th>Customer</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="order : ${orders}">
+                                        <td th:text="${order.id}">1</td>
+                                        <td th:text="'Table ' + ${order.table.tableNumber}">Table 1</td>
+                                        <td>
+                                            <div th:text="${order.customerName}">John Doe</div>
+                                            <small class="text-muted" th:text="${order.customerPhone}">123-456-7890</small>
+                                        </td>
+                                        <td th:text="${#temporals.format(order.orderTime, 'HH:mm')}">12:00</td>
+                                        <td>
+                                            <span th:class="${'badge ' + 
+                                                (order.status == T(com.restaurant.model.Order.OrderStatus).PENDING ? 'bg-warning' : 
+                                                (order.status == T(com.restaurant.model.Order.OrderStatus).COMPLETED ? 'bg-success' : 'bg-danger'))}"
+                                                  th:text="${order.status}">Pending</span>
+                                        </td>
+                                        <td th:text="${'$' + #numbers.formatDecimal(order.totalAmount, 1, 2)}">$0.00</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a th:href="@{/orders/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <form th:action="@{/orders/{id}/delete(id=${order.id})}" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="return confirm('Are you sure you want to delete this order?')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                            data-bs-toggle="dropdown">
+                                                        Status
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <form th:action="@{/orders/{id}/status(id=${order.id})}" method="post">
+                                                                <input type="hidden" name="status" value="PENDING">
+                                                                <button type="submit" class="dropdown-item">Mark as Pending</button>
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <form th:action="@{/orders/{id}/status(id=${order.id})}" method="post">
+                                                                <input type="hidden" name="status" value="COMPLETED">
+                                                                <button type="submit" class="dropdown-item">Mark as Completed</button>
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <form th:action="@{/orders/{id}/status(id=${order.id})}" method="post">
+                                                                <input type="hidden" name="status" value="CANCELLED">
+                                                                <button type="submit" class="dropdown-item">Mark as Cancelled</button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Restaurant Management System - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Restaurant Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tables">Tables</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders">Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/menu">Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">Inventory</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reservations">Reservations</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Pending Orders Card -->
+            <div class="col-md-3 mb-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Orders</h5>
+                        <h2 class="card-text" th:text="${pendingOrders.size()}">0</h2>
+                        <a href="/orders" class="text-white">View all orders <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Available Tables Card -->
+            <div class="col-md-3 mb-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Available Tables</h5>
+                        <h2 class="card-text" th:text="${availableTables.size()}">0</h2>
+                        <a href="/tables" class="text-white">View all tables <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Low Inventory Card -->
+            <div class="col-md-3 mb-4">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h5 class="card-title">Low Stock Items</h5>
+                        <h2 class="card-text" th:text="${lowStockItems.size()}">0</h2>
+                        <a href="/inventory" class="text-dark">View inventory <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Reservations Card -->
+            <div class="col-md-3 mb-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Today's Reservations</h5>
+                        <h2 class="card-text" th:text="${todayReservations.size()}">0</h2>
+                        <a href="/reservations" class="text-white">View reservations <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>Quick Actions</h3>
+                <div class="d-flex gap-2">
+                    <a href="/orders/new" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> New Order
+                    </a>
+                    <a href="/reservations/new" class="btn btn-success">
+                        <i class="bi bi-calendar-plus"></i> New Reservation
+                    </a>
+                    <a href="/tables/new" class="btn btn-info">
+                        <i class="bi bi-table"></i> Add Table
+                    </a>
+                    <a href="/inventory/new" class="btn btn-warning">
+                        <i class="bi bi-box"></i> Add Inventory Item
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Recent Orders</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a th:each="order : ${pendingOrders}" th:href="@{/orders/{id}(id=${order.id})}" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1" th:text="'Table ' + ${order.table.tableNumber}">Table 1</h6>
+                                    <small th:text="${#temporals.format(order.orderTime, 'HH:mm')}">12:00</small>
+                                </div>
+                                <p class="mb-1" th:text="${order.customerName}">Customer Name</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Today's Reservations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a th:each="reservation : ${todayReservations}" th:href="@{/reservations/{id}(id=${reservation.id})}" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1" th:text="${reservation.customerName}">Customer Name</h6>
+                                    <small th:text="${#temporals.format(reservation.reservationTime, 'HH:mm')}">12:00</small>
+                                </div>
+                                <p class="mb-1" th:text="'Table ' + ${reservation.table.tableNumber} + ' - Party of ' + ${reservation.partySize}">Table 1 - Party of 2</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
