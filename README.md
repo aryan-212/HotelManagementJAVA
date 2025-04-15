@@ -35,7 +35,32 @@ A comprehensive web-based restaurant management system built with Spring Boot an
      spring.datasource.password=your_password
      ```
 
-3. Build the project:
+3. Configure environment variables:
+   - Create a `.env` file in the root directory of the project
+   - Add the following environment variables:
+     ```properties
+     # Database Configuration
+     DB_URL=jdbc:mysql://localhost:3306/restaurant_db
+     DB_USERNAME=your_username
+     DB_PASSWORD=your_password
+
+     # Server Configuration
+     SERVER_PORT=8080
+     SPRING_PROFILES_ACTIVE=dev
+
+     # JWT Configuration (if using authentication)
+     JWT_SECRET=your_jwt_secret_key
+     JWT_EXPIRATION=86400000
+
+     # Email Configuration (if using email notifications)
+     SMTP_HOST=smtp.gmail.com
+     SMTP_PORT=587
+     SMTP_USERNAME=your_email@gmail.com
+     SMTP_PASSWORD=your_app_specific_password
+     ```
+   - Note: The `.env` file is ignored by git for security reasons. Make sure to keep your sensitive information secure and never commit this file to version control.
+
+4. Build the project:
    ```bash
    mvn clean install
    ```
