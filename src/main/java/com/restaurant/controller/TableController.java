@@ -33,26 +33,26 @@ public class TableController {
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    public String showEditForm(@PathVariable(value = "id") Long id, Model model) {
         model.addAttribute("table", tableService.getTableById(id));
         return "tables/form";
     }
 
     @PostMapping("/{id}")
-    public String updateTable(@PathVariable Long id, @ModelAttribute RestaurantTable table) {
+    public String updateTable(@PathVariable(value = "id") Long id, @ModelAttribute RestaurantTable table) {
         table.setId(id);
         tableService.updateTable(table);
         return "redirect:/tables";
     }
 
     @PostMapping("/{id}/delete")
-    public String deleteTable(@PathVariable Long id) {
+    public String deleteTable(@PathVariable(value = "id") Long id) {
         tableService.deleteTable(id);
         return "redirect:/tables";
     }
 
     @PostMapping("/{id}/status")
-    public String updateTableStatus(@PathVariable Long id, @RequestParam RestaurantTable.TableStatus status) {
+    public String updateTableStatus(@PathVariable(value = "id") Long id, @RequestParam RestaurantTable.TableStatus status) {
         RestaurantTable table = tableService.getTableById(id);
         table.setStatus(status);
         tableService.updateTable(table);

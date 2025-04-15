@@ -1,9 +1,21 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>New Order</title>
+    <title>New Order - Restaurant Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .menu-item {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .menu-item:hover {
+            background-color: #f8f9fa;
+        }
+        .selected-item {
+            background-color: #e9ecef;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -38,39 +50,91 @@
     </nav>
 
     <div class="container mt-4">
-        <div class="row justify-content-center">
+        <h2>Create New Order</h2>
+        
+        <div th:if="${param.error}" class="alert alert-danger">
+            An error occurred while creating the order. Please try again.
+        </div>
+        
+        <div class="row">
             <div class="col-md-8">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-header">
-                        <h3 class="card-title mb-0">New Order</h3>
+                        <h5 class="card-title mb-0">Menu Items</h5>
                     </div>
                     <div class="card-body">
-                        <form th:action="@{/orders}" method="post" th:object="${order}">
-                            <div class="mb-3">
-                                <label for="table" class="form-label">Table</label>
-                                <select class="form-select" id="table" th:field="*{table}" required>
-                                    <option value="">Select a table</option>
-                                    <option th:each="table : ${tables}"
-                                            th:value="${table.id}"
-                                            th:text="'Table ' + ${table.tableNumber} + ' (Capacity: ' + ${table.capacity} + ')'">
-                                        Table 1 (Capacity: 4)
-                                    </option>
-                                </select>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <input type="text" class="form-control" id="searchMenu" placeholder="Search menu items...">
                             </div>
-
+                        </div>
+                        <div class="row" id="menuItems">
+                            <div th:each="item : ${menuItems}" class="col-md-6 mb-3">
+                                <div class="card menu-item" 
+                                     th:data-id="${item.id}"
+                                     th:data-name="${item.name}"
+                                     th:data-price="${item.price}"
+                                     onclick="handleMenuItemClick(this)">
+                                    <div class="card-body">
+                                        <h6 class="card-title" th:text="${item.name}">Item Name</h6>
+                                        <p class="card-text" th:text="${item.description}">Description</p>
+                                        <p class="card-text"><strong>$<span th:text="${#numbers.formatDecimal(item.price, 1, 2)}">0.00</span></strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Order Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/orders}" method="post" th:object="${order}" onsubmit="return prepareOrderSubmission()">
+                            <input type="hidden" th:field="*{status}" />
+                            <input type="hidden" th:field="*{totalAmount}" />
+                            <input type="hidden" name="itemsJson" id="itemsInput" />
+                            
                             <div class="mb-3">
                                 <label for="customerName" class="form-label">Customer Name</label>
                                 <input type="text" class="form-control" id="customerName" th:field="*{customerName}" required>
                             </div>
 
                             <div class="mb-3">
-                                <label for="customerPhone" class="form-label">Customer Phone</label>
+                                <label for="customerPhone" class="form-label">Phone Number</label>
                                 <input type="tel" class="form-control" id="customerPhone" th:field="*{customerPhone}" required>
                             </div>
 
-                            <div class="d-flex justify-content-between">
+                            <div class="mb-3">
+                                <label for="table" class="form-label">Table</label>
+                                <select class="form-select" id="table" th:field="*{table.id}" required>
+                                    <option value="">Select a table</option>
+                                    <option th:each="table : ${tables}"
+                                            th:value="${table.id}"
+                                            th:text="'Table ' + ${table.tableNumber} + ' (Capacity: ' + ${table.capacity} + ')'"
+                                            th:selected="${table != null and table.id == table.id}">
+                                        Table 1 (Capacity: 4)
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Selected Items</label>
+                                <div id="selectedItems" class="mb-3">
+                                    <!-- Selected items will be added here dynamically -->
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Total Amount</label>
+                                <input type="text" class="form-control" id="displayTotal" value="$0.00" readonly>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" onclick="return prepareOrderSubmission()">Place Order</button>
                                 <a href="/orders" class="btn btn-secondary">Cancel</a>
-                                <button type="submit" class="btn btn-primary">Create Order</button>
                             </div>
                         </form>
                     </div>
@@ -79,4 +143,130 @@
         </div>
     </div>
 
- 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedItems = [];
+        let total = 0;
+
+        function handleMenuItemClick(element) {
+            const id = parseInt(element.getAttribute('data-id'));
+            const name = element.getAttribute('data-name');
+            const price = parseFloat(element.getAttribute('data-price'));
+            addToOrder(id, name, price);
+        }
+
+        function addToOrder(id, name, price) {
+            const existingItem = selectedItems.find(item => item.id === id);
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                selectedItems.push({
+                    id: id,
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            updateOrderDisplay();
+        }
+
+        function removeItem(id) {
+            selectedItems = selectedItems.filter(item => item.id !== id);
+            updateOrderDisplay();
+        }
+
+        function updateQuantity(id, change) {
+            const item = selectedItems.find(item => item.id === id);
+            if (item) {
+                item.quantity = Math.max(1, item.quantity + change);
+                updateOrderDisplay();
+            }
+        }
+
+        function updateOrderDisplay() {
+            const container = document.getElementById('selectedItems');
+            container.innerHTML = '';
+            total = 0;
+
+            selectedItems.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'card mb-2';
+                itemDiv.innerHTML = `
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${item.name}</h6>
+                                <small class="text-muted">$${item.price.toFixed(2)} each</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${item.id}, -1)">-</button>
+                                <span class="mx-2">${item.quantity}</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${item.id}, 1)">+</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeItem(${item.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-end mt-1">
+                            <small>Subtotal: $${itemTotal.toFixed(2)}</small>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            document.getElementById('totalAmount').value = total.toFixed(2);
+            document.getElementById('displayTotal').value = `$${total.toFixed(2)}`;
+        }
+
+        function prepareOrderSubmission() {
+            if (selectedItems.length === 0) {
+                alert('Please select at least one item for the order.');
+                return false;
+            }
+
+            const tableSelect = document.getElementById('table');
+            if (!tableSelect.value) {
+                alert('Please select a table for the order.');
+                return false;
+            }
+
+            const customerName = document.getElementById('customerName').value.trim();
+            if (!customerName) {
+                alert('Please enter the customer name.');
+                return false;
+            }
+
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            if (!customerPhone) {
+                alert('Please enter the customer phone number.');
+                return false;
+            }
+
+            const itemsJson = selectedItems.map(item => `${item.id},${item.quantity}`).join('|');
+            document.getElementById('itemsInput').value = itemsJson;
+            return true;
+        }
+
+        // Search functionality
+        document.getElementById('searchMenu').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            menuItems.forEach(item => {
+                const itemName = item.querySelector('.card-title').textContent.toLowerCase();
+                const itemDescription = item.querySelector('.card-text').textContent.toLowerCase();
+                
+                if (itemName.includes(searchTerm) || itemDescription.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -37,19 +37,19 @@ public class MenuItemController {
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    public String showEditForm(@PathVariable("id") Long id, Model model) {
         model.addAttribute("menuItem", menuItemService.getMenuItemById(id));
         return "menu/form";
     }
 
     @PostMapping("/{id}/edit")
-    public String updateMenuItem(@PathVariable Long id, @ModelAttribute("menuItem") MenuItem menuItem) {
+    public String updateMenuItem(@PathVariable("id") Long id, @ModelAttribute("menuItem") MenuItem menuItem) {
         menuItemService.updateMenuItem(id, menuItem);
         return "redirect:/menu";
     }
 
     @PostMapping("/{id}/delete")
-    public String deleteMenuItem(@PathVariable Long id) {
+    public String deleteMenuItem(@PathVariable("id") Long id) {
         try {
             menuItemService.deleteMenuItem(id);
             return "redirect:/menu";

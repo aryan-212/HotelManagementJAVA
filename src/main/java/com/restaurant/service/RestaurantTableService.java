@@ -1,6 +1,7 @@
 package com.restaurant.service;
 
 import com.restaurant.model.RestaurantTable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface RestaurantTableService {
@@ -10,4 +11,5 @@ public interface RestaurantTableService {
     void deleteTable(Long id);
     RestaurantTable getTableById(Long id);
     List<RestaurantTable> getAllTables();
+    boolean isTableAvailable(Long tableId, LocalDateTime reservationTime);
 } 

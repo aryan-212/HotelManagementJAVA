@@ -5,6 +5,7 @@ import com.restaurant.repository.RestaurantTableRepository;
 import com.restaurant.service.RestaurantTableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -41,5 +42,16 @@ public class RestaurantTableServiceImpl implements RestaurantTableService {
     @Override
     public List<RestaurantTable> getAllTables() {
         return tableRepository.findAll();
+    }
+
+    @Override
+    public boolean isTableAvailable(Long tableId, LocalDateTime reservationTime) {
+        RestaurantTable table = getTableById(tableId);
+        if (table == null || table.getStatus() != RestaurantTable.TableStatus.AVAILABLE) {
+            return false;
+        }
+        // Check if there are any reservations for this table at the specified time
+        return table.getReservations().stream()
+                .noneMatch(reservation -> reservation.getReservationTime().equals(reservationTime));
     }
 } 

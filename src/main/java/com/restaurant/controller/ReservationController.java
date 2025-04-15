@@ -5,10 +5,14 @@ import com.restaurant.model.RestaurantTable;
 import com.restaurant.service.ReservationService;
 import com.restaurant.service.RestaurantTableService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -30,15 +34,20 @@ public class ReservationController {
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
-        List<RestaurantTable> availableTables = tableService.getAvailableTables();
-        model.addAttribute("tables", availableTables);
         model.addAttribute("reservation", new Reservation());
+        List<RestaurantTable> availableTables = tableService.getAvailableTables();
+        model.addAttribute("availableTables", availableTables);
         return "reservations/form";
     }
 
     @PostMapping
-    public String createReservation(@ModelAttribute Reservation reservation) {
-        if (reservationService.isTableAvailable(reservation.getTable().getId(), reservation.getReservationTime())) {
+    public String createReservation(@ModelAttribute Reservation reservation,
+                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time) {
+        LocalDateTime reservationDateTime = LocalDateTime.of(date, time);
+        reservation.setReservationTime(reservationDateTime);
+        
+        if (tableService.isTableAvailable(reservation.getTable().getId(), reservationDateTime)) {
             reservationService.createReservation(reservation);
             return "redirect:/reservations";
         }
@@ -48,15 +57,21 @@ public class ReservationController {
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model) {
         Reservation reservation = reservationService.getReservationById(id);
-        List<RestaurantTable> availableTables = tableService.getAvailableTables();
         model.addAttribute("reservation", reservation);
-        model.addAttribute("tables", availableTables);
+        List<RestaurantTable> availableTables = tableService.getAvailableTables();
+        model.addAttribute("availableTables", availableTables);
         return "reservations/form";
     }
 
     @PostMapping("/{id}")
-    public String updateReservation(@PathVariable Long id, @ModelAttribute Reservation reservation) {
-        if (reservationService.isTableAvailable(reservation.getTable().getId(), reservation.getReservationTime())) {
+    public String updateReservation(@PathVariable Long id,
+                                  @ModelAttribute Reservation reservation,
+                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time) {
+        LocalDateTime reservationDateTime = LocalDateTime.of(date, time);
+        reservation.setReservationTime(reservationDateTime);
+        
+        if (tableService.isTableAvailable(reservation.getTable().getId(), reservationDateTime)) {
             reservationService.updateReservation(id, reservation);
             return "redirect:/reservations";
         }

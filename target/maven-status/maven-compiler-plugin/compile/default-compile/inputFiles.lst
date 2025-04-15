@@ -12,6 +12,7 @@
 /home/aryan/RMS/OOAD PROJECT/src/main/java/com/restaurant/dao/InventoryDao.java
 /home/aryan/RMS/OOAD PROJECT/src/main/java/com/restaurant/service/ReservationService.java
 /home/aryan/RMS/OOAD PROJECT/src/main/java/com/restaurant/service/OrderService.java
+/home/aryan/RMS/OOAD PROJECT/src/main/java/com/restaurant/exception/GlobalExceptionHandler.java
 /home/aryan/RMS/OOAD PROJECT/src/main/java/com/restaurant/dao/ReservationDao.java
 /home/aryan/RMS/OOAD PROJECT/src/main/java/com/restaurant/repository/ReservationRepository.java
 /home/aryan/RMS/OOAD PROJECT/src/main/java/com/restaurant/model/Bill.java

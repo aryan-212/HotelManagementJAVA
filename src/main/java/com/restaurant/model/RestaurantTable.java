@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "restaurant_tables")
+@Table(name = "dining_tables")
 public class RestaurantTable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +22,9 @@ public class RestaurantTable {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TableStatus status = TableStatus.AVAILABLE;
+
+    @Column(name = "is_occupied", nullable = false)
+    private Boolean isOccupied = false;
 
     @OneToMany(mappedBy = "table")
     private List<Order> orders = new ArrayList<>();
@@ -66,6 +69,20 @@ public class RestaurantTable {
 
     public void setStatus(TableStatus status) {
         this.status = status;
+        this.isOccupied = (status == TableStatus.OCCUPIED);
+    }
+
+    public Boolean getIsOccupied() {
+        return isOccupied;
+    }
+
+    public void setIsOccupied(Boolean isOccupied) {
+        this.isOccupied = isOccupied;
+        if (isOccupied) {
+            this.status = TableStatus.OCCUPIED;
+        } else if (this.status == TableStatus.OCCUPIED) {
+            this.status = TableStatus.AVAILABLE;
+        }
     }
 
     public List<Order> getOrders() {
