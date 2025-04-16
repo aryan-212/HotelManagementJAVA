@@ -8,17 +8,24 @@ import com.restaurant.service.OrderService;
 import com.restaurant.service.RestaurantTableService;
 import com.restaurant.service.MenuItemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomNumberEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
+import java.math.BigDecimal;
 
 @Controller
 @RequestMapping("/orders")
 public class OrderController {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
 
     @Autowired
     private OrderService orderService;
@@ -28,6 +35,20 @@ public class OrderController {
 
     @Autowired
     private MenuItemService menuItemService;
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(RestaurantTable.class, "table", new CustomNumberEditor(Long.class, true) {
+            @Override
+            public void setAsText(String text) {
+                if (text != null && !text.isEmpty()) {
+                    Long id = Long.parseLong(text);
+                    RestaurantTable table = tableService.getTableById(id);
+                    setValue(table);
+                }
+            }
+        });
+    }
 
     @GetMapping
     public String listOrders(Model model) {
@@ -59,81 +80,112 @@ public class OrderController {
         return "orders/form";
     }
 
-    @PostMapping
-    public String createOrder(@ModelAttribute("order") Order order, @RequestParam(value = "itemsJson", required = false) String itemsJson) {
+    @PostMapping("/new")
+    public String createOrder(@ModelAttribute Order order, 
+                            @RequestParam(value = "items", required = false) String itemsJson,
+                            @RequestParam(value = "tableId", required = false) Long tableId,
+                            Model model) {
         try {
-            // Set required fields
+            logger.info("Starting order creation process");
+            logger.info("Order details: {}", order);
+            logger.info("Items JSON: {}", itemsJson);
+            logger.info("Table ID: {}", tableId);
+            
+            // Validate table
+            if (tableId == null) {
+                throw new IllegalArgumentException("Table is required");
+            }
+
+            // Get and validate table
+            RestaurantTable table = tableService.getTableById(tableId);
+            logger.info("Found table: {}", table);
+            if (table == null) {
+                throw new IllegalArgumentException("Table not found");
+            }
+
+            // Set the table
+            order.setTable(table);
+            logger.info("Table set on order");
+
+            // Validate table status
+            if (table.getStatus() != RestaurantTable.TableStatus.AVAILABLE) {
+                throw new IllegalArgumentException("Table is not available");
+            }
+
+            // Validate customer info
+            if (order.getCustomerName() == null || order.getCustomerName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Customer name is required");
+            }
+            if (order.getCustomerPhone() == null || order.getCustomerPhone().trim().isEmpty()) {
+                throw new IllegalArgumentException("Customer phone is required");
+            }
+
+            // Validate items
+            if (itemsJson == null || itemsJson.trim().isEmpty()) {
+                throw new IllegalArgumentException("At least one item is required");
+            }
+
+            // Set order details
             order.setOrderTime(LocalDateTime.now());
             order.setStatus(Order.OrderStatus.PENDING);
-            
-            // Initialize the items list
-            List<OrderItem> orderItems = new ArrayList<>();
-            order.setItems(orderItems);
-            
-            // Get the table from the service to ensure we have the complete entity
-            if (order.getTable() == null || order.getTable().getId() == null) {
-                System.err.println("Error: Table is null or has null ID");
-                throw new IllegalArgumentException("Table is required for creating an order");
+            order.setItems(new ArrayList<>());
+            logger.info("Basic order details set");
+
+            // Parse and validate items
+            String[] itemPairs = itemsJson.split("\\|");
+            double totalAmount = 0.0;
+
+            for (String itemPair : itemPairs) {
+                String[] parts = itemPair.split(",");
+                if (parts.length != 2) {
+                    throw new IllegalArgumentException("Invalid item format");
+                }
+
+                Long menuItemId = Long.parseLong(parts[0]);
+                int quantity = Integer.parseInt(parts[1]);
+
+                if (quantity <= 0) {
+                    throw new IllegalArgumentException("Quantity must be greater than 0");
+                }
+
+                MenuItem menuItem = menuItemService.getMenuItemById(menuItemId);
+                logger.info("Found menu item: {}", menuItem);
+                if (menuItem == null) {
+                    throw new IllegalArgumentException("Menu item not found: " + menuItemId);
+                }
+
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setMenuItem(menuItem);
+                orderItem.setQuantity(quantity);
+                orderItem.setUnitPrice(menuItem.getPrice());
+                orderItem.setSubtotal(menuItem.getPrice().multiply(new BigDecimal(quantity)));
+                order.getItems().add(orderItem);
+                logger.info("Added order item: {}", orderItem);
+
+                totalAmount += orderItem.getSubtotal().doubleValue();
             }
-            
-            System.out.println("Table ID: " + order.getTable().getId());
-            RestaurantTable table = tableService.getTableById(order.getTable().getId());
-            if (table == null) {
-                System.err.println("Error: Table not found with ID: " + order.getTable().getId());
-                throw new IllegalArgumentException("Table not found with ID: " + order.getTable().getId());
-            }
-            
-            order.setTable(table);
-            
+
+            order.setTotalAmount(totalAmount);
+            logger.info("Order total amount: {}", totalAmount);
+
             // Update table status
             table.setStatus(RestaurantTable.TableStatus.OCCUPIED);
             tableService.updateTable(table);
-            
-            // Parse and add order items
-            double totalAmount = 0.0;
-            if (itemsJson != null && !itemsJson.isEmpty()) {
-                System.out.println("Items JSON: " + itemsJson);
-                String[] items = itemsJson.split("\\|");
-                for (String item : items) {
-                    if (!item.isEmpty()) {
-                        String[] parts = item.split(",");
-                        Long menuItemId = Long.parseLong(parts[0]);
-                        int quantity = Integer.parseInt(parts[1]);
-                        
-                        System.out.println("Processing menu item: " + menuItemId + " with quantity: " + quantity);
-                        MenuItem menuItem = menuItemService.getMenuItemById(menuItemId);
-                        if (menuItem == null) {
-                            System.err.println("Error: Menu item not found with ID: " + menuItemId);
-                            throw new IllegalArgumentException("Menu item not found with ID: " + menuItemId);
-                        }
-                        
-                        OrderItem orderItem = new OrderItem();
-                        orderItem.setOrder(order);
-                        orderItem.setMenuItem(menuItem);
-                        orderItem.setQuantity(quantity);
-                        orderItem.setUnitPrice(menuItem.getPrice());
-                        orderItem.setSubtotal(menuItem.getPrice().multiply(new java.math.BigDecimal(quantity)));
-                        
-                        orderItems.add(orderItem);
-                        totalAmount += orderItem.getSubtotal().doubleValue();
-                    }
-                }
-            } else {
-                System.err.println("Error: No items selected for the order");
-                throw new IllegalArgumentException("At least one menu item is required for creating an order");
-            }
-            
-            order.setTotalAmount(totalAmount);
-            
-            // Save the order
-            System.out.println("Saving order with " + orderItems.size() + " items");
-            orderService.createOrder(order);
+            logger.info("Table status updated");
+
+            // Save order
+            logger.info("Saving order...");
+            Order savedOrder = orderService.createOrder(order);
+            logger.info("Order saved with ID: {}", savedOrder.getId());
+
             return "redirect:/orders";
         } catch (Exception e) {
-            // Log the error and redirect to the form with an error message
-            System.err.println("Error creating order: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/orders/new?error=true";
+            logger.error("Error creating order: {}", e.getMessage(), e);
+            model.addAttribute("error", "Error creating order: " + e.getMessage());
+            model.addAttribute("menuItems", menuItemService.getAllMenuItems());
+            model.addAttribute("tables", tableService.getAvailableTables());
+            return "orders/form";
         }
     }
 

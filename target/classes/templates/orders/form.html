@@ -92,7 +92,7 @@
                         <h5 class="card-title mb-0">Order Details</h5>
                     </div>
                     <div class="card-body">
-                        <form th:action="@{/orders}" method="post" th:object="${order}" onsubmit="return prepareOrderSubmission()">
+                        <form th:action="@{/orders/new}" method="post" th:object="${order}" onsubmit="return prepareOrderSubmission()">
                             <input type="hidden" th:field="*{status}" />
                             <input type="hidden" th:field="*{totalAmount}" />
                             <input type="hidden" name="itemsJson" id="itemsInput" />
@@ -109,12 +109,11 @@
 
                             <div class="mb-3">
                                 <label for="table" class="form-label">Table</label>
-                                <select class="form-select" id="table" th:field="*{table.id}" required>
+                                <select class="form-select" id="table" name="tableId" required>
                                     <option value="">Select a table</option>
                                     <option th:each="table : ${tables}"
                                             th:value="${table.id}"
-                                            th:text="'Table ' + ${table.tableNumber} + ' (Capacity: ' + ${table.capacity} + ')'"
-                                            th:selected="${table != null and table.id == table.id}">
+                                            th:text="'Table ' + ${table.tableNumber} + ' (Capacity: ' + ${table.capacity} + ')'">
                                         Table 1 (Capacity: 4)
                                     </option>
                                 </select>
@@ -133,7 +132,7 @@
                             </div>
 
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary" onclick="return prepareOrderSubmission()">Place Order</button>
+                                <button type="submit" class="btn btn-primary">Place Order</button>
                                 <a href="/orders" class="btn btn-secondary">Cancel</a>
                             </div>
                         </form>
@@ -246,8 +245,13 @@
                 return false;
             }
 
+            // Set the total amount
+            document.getElementById('totalAmount').value = total.toFixed(2);
+
+            // Prepare items JSON
             const itemsJson = selectedItems.map(item => `${item.id},${item.quantity}`).join('|');
             document.getElementById('itemsInput').value = itemsJson;
+
             return true;
         }
 

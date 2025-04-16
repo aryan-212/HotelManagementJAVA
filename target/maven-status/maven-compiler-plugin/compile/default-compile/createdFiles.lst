@@ -10,6 +10,7 @@ com/restaurant/repository/InventoryRepository.class
 com/restaurant/service/impl/ReservationServiceImpl.class
 com/restaurant/service/impl/MenuItemServiceImpl.class
 com/restaurant/service/RestaurantTableService.class
+com/restaurant/controller/OrderController$1.class
 com/restaurant/model/Reservation.class
 com/restaurant/service/impl/InventoryServiceImpl.class
 com/restaurant/model/MenuItem.class

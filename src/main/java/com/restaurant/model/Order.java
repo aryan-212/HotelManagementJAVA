@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Data;
 
+@Data
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -12,7 +14,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "table_id", nullable = false)
     private RestaurantTable table;
 
@@ -27,16 +29,38 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status;
+    private OrderStatus status = OrderStatus.PENDING;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = {CascadeType.ALL}, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
 
     @Column(nullable = false)
-    private double totalAmount;
+    private double totalAmount = 0.0;
 
     public enum OrderStatus {
         PENDING, COMPLETED, CANCELLED
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (orderTime == null) {
+            orderTime = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = OrderStatus.PENDING;
+        }
+    }
+
+    // Helper method to add order item
+    public void addOrderItem(OrderItem item) {
+        items.add(item);
+        item.setOrder(this);
+    }
+
+    // Helper method to remove order item
+    public void removeOrderItem(OrderItem item) {
+        items.remove(item);
+        item.setOrder(null);
     }
 
     // Getters and Setters

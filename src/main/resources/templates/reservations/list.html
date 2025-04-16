@@ -65,19 +65,19 @@
                                 <td th:text="${reservation.id}">1</td>
                                 <td>
                                     <div th:text="${reservation.customerName}">John Doe</div>
-                                    <small class="text-muted" th:text="${reservation.phoneNumber}">+1234567890</small>
+                                    <small class="text-muted" th:text="${reservation.customerPhone}">+1234567890</small>
                                 </td>
                                 <td>
-                                    <div th:text="${#temporals.format(reservation.reservationDate, 'MMM dd, yyyy')}">Jan 01, 2024</div>
+                                    <div th:text="${#temporals.format(reservation.reservationTime, 'MMM dd, yyyy')}">Jan 01, 2024</div>
                                     <small class="text-muted" th:text="${#temporals.format(reservation.reservationTime, 'hh:mm a')}">12:00 PM</small>
                                 </td>
                                 <td th:text="${reservation.partySize}">4</td>
                                 <td th:text="${'Table ' + reservation.table.tableNumber}">Table 1</td>
                                 <td>
                                     <span class="badge" 
-                                          th:classappend="${reservation.status == 'PENDING' ? 'bg-warning' : 
-                                                         (reservation.status == 'CONFIRMED' ? 'bg-success' : 
-                                                         (reservation.status == 'CANCELLED' ? 'bg-danger' : 'bg-info'))}"
+                                          th:classappend="${reservation.status == T(com.restaurant.model.Reservation.ReservationStatus).PENDING ? 'bg-warning' : 
+                                                         (reservation.status == T(com.restaurant.model.Reservation.ReservationStatus).CONFIRMED ? 'bg-success' : 
+                                                         (reservation.status == T(com.restaurant.model.Reservation.ReservationStatus).CANCELLED ? 'bg-danger' : 'bg-info'))}"
                                           th:text="${reservation.status}">
                                         PENDING
                                     </span>

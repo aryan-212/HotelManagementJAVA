@@ -44,7 +44,7 @@
                 <div class="card bg-primary text-white">
                     <div class="card-body">
                         <h5 class="card-title">Pending Orders</h5>
-                        <h2 class="card-text" th:text="${pendingOrders.size()}">0</h2>
+                        <h2 class="card-text" th:text="${pendingOrdersCount}">0</h2>
                         <a href="/orders" class="text-white">View all orders <i class="bi bi-arrow-right"></i></a>
                     </div>
                 </div>
@@ -114,13 +114,19 @@
                     </div>
                     <div class="card-body">
                         <div class="list-group">
-                            <a th:each="order : ${pendingOrders}" th:href="@{/orders/{id}(id=${order.id})}" 
+                            <a th:each="order : ${recentOrders}" th:href="@{/orders/{id}(id=${order.id})}" 
                                class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1" th:text="'Table ' + ${order.table.tableNumber}">Table 1</h6>
                                     <small th:text="${#temporals.format(order.orderTime, 'HH:mm')}">12:00</small>
                                 </div>
                                 <p class="mb-1" th:text="${order.customerName}">Customer Name</p>
+                                <small>
+                                    <span th:class="${'badge ' + 
+                                        (order.status == T(com.restaurant.model.Order.OrderStatus).PENDING ? 'bg-warning' : 
+                                        (order.status == T(com.restaurant.model.Order.OrderStatus).COMPLETED ? 'bg-success' : 'bg-danger'))}"
+                                          th:text="${order.status}">Pending</span>
+                                </small>
                             </a>
                         </div>
                     </div>

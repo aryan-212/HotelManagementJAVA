@@ -9,11 +9,15 @@ import com.restaurant.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @Service
 public class OrderServiceImpl implements OrderService {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     @Autowired
     private OrderRepository orderRepository;
@@ -35,7 +39,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Order createOrder(Order order) {
-        return orderRepository.save(order);
+        try {
+            logger.info("Creating new order: {}", order);
+            Order savedOrder = orderRepository.save(order);
+            logger.info("Order created successfully with ID: {}", savedOrder.getId());
+            return savedOrder;
+        } catch (Exception e) {
+            logger.error("Error creating order: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override

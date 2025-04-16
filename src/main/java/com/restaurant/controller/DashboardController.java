@@ -34,10 +34,16 @@ public class DashboardController {
 
     @GetMapping("/")
     public String dashboard(Model model) {
-        // Get pending orders
-        List<Order> pendingOrders = orderService.getAllOrders().stream()
-                .filter(order -> order.getStatus() == Order.OrderStatus.PENDING)
+        // Get all orders sorted by time
+        List<Order> recentOrders = orderService.getAllOrders().stream()
+                .sorted((o1, o2) -> o2.getOrderTime().compareTo(o1.getOrderTime()))
+                .limit(5)
                 .collect(Collectors.toList());
+
+        // Get pending orders count
+        long pendingOrdersCount = orderService.getAllOrders().stream()
+                .filter(order -> order.getStatus() == Order.OrderStatus.PENDING)
+                .count();
 
         // Get available tables
         List<RestaurantTable> availableTables = tableService.getAvailableTables();
@@ -51,7 +57,8 @@ public class DashboardController {
         List<Reservation> todayReservations = reservationService.getReservationsByDateRange(startOfDay, endOfDay);
 
         // Add attributes to model
-        model.addAttribute("pendingOrders", pendingOrders);
+        model.addAttribute("recentOrders", recentOrders);
+        model.addAttribute("pendingOrdersCount", pendingOrdersCount);
         model.addAttribute("availableTables", availableTables);
         model.addAttribute("lowStockItems", lowStockItems);
         model.addAttribute("todayReservations", todayReservations);

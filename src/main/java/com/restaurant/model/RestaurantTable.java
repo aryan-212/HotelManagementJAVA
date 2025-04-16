@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "dining_tables")
+@Table(name = "restaurant_tables")
 public class RestaurantTable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,10 +26,10 @@ public class RestaurantTable {
     @Column(name = "is_occupied", nullable = false)
     private Boolean isOccupied = false;
 
-    @OneToMany(mappedBy = "table")
+    @OneToMany(mappedBy = "table", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();
 
-    @OneToMany(mappedBy = "table")
+    @OneToMany(mappedBy = "table", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reservation> reservations = new ArrayList<>();
 
     public enum TableStatus {
@@ -99,5 +99,19 @@ public class RestaurantTable {
 
     public void setReservations(List<Reservation> reservations) {
         this.reservations = reservations;
+    }
+
+    // Helper method to remove all associated orders and reservations
+    @PreRemove
+    private void preRemove() {
+        for (Order order : new ArrayList<>(orders)) {
+            order.setTable(null);
+        }
+        orders.clear();
+        
+        for (Reservation reservation : new ArrayList<>(reservations)) {
+            reservation.setTable(null);
+        }
+        reservations.clear();
     }
 } 

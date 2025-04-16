@@ -42,20 +42,50 @@ public class ReservationController {
 
     @PostMapping
     public String createReservation(@ModelAttribute Reservation reservation,
-                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time) {
-        LocalDateTime reservationDateTime = LocalDateTime.of(date, time);
-        reservation.setReservationTime(reservationDateTime);
-        
-        if (tableService.isTableAvailable(reservation.getTable().getId(), reservationDateTime)) {
+                                  @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                  @RequestParam(name = "time") @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
+                                  Model model) {
+        try {
+            LocalDateTime reservationDateTime = LocalDateTime.of(date, time);
+            reservation.setReservationTime(reservationDateTime);
+            
+            // Set default status if not provided
+            if (reservation.getStatus() == null) {
+                reservation.setStatus(Reservation.ReservationStatus.PENDING);
+            }
+            
+            // Validate table
+            if (reservation.getTable() == null || reservation.getTable().getId() == null) {
+                throw new IllegalArgumentException("Table is required");
+            }
+            
+            // Check table availability
+            if (!tableService.isTableAvailable(reservation.getTable().getId(), reservationDateTime)) {
+                model.addAttribute("error", "Selected table is not available at the specified time");
+                model.addAttribute("reservation", reservation);
+                model.addAttribute("availableTables", tableService.getAvailableTables());
+                return "reservations/form";
+            }
+            
             reservationService.createReservation(reservation);
             return "redirect:/reservations";
+        } catch (Exception e) {
+            model.addAttribute("error", "Error creating reservation: " + e.getMessage());
+            model.addAttribute("reservation", reservation);
+            model.addAttribute("availableTables", tableService.getAvailableTables());
+            return "reservations/form";
         }
-        return "redirect:/reservations/new?error=table-unavailable";
+    }
+
+    @GetMapping("/{id}")
+    public String viewReservation(@PathVariable("id") Long id, Model model) {
+        Reservation reservation = reservationService.getReservationById(id);
+        model.addAttribute("reservation", reservation);
+        return "reservations/view";
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    public String showEditForm(@PathVariable("id") Long id, Model model) {
         Reservation reservation = reservationService.getReservationById(id);
         model.addAttribute("reservation", reservation);
         List<RestaurantTable> availableTables = tableService.getAvailableTables();
@@ -64,28 +94,39 @@ public class ReservationController {
     }
 
     @PostMapping("/{id}")
-    public String updateReservation(@PathVariable Long id,
+    public String updateReservation(@PathVariable("id") Long id,
                                   @ModelAttribute Reservation reservation,
-                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time) {
-        LocalDateTime reservationDateTime = LocalDateTime.of(date, time);
-        reservation.setReservationTime(reservationDateTime);
-        
-        if (tableService.isTableAvailable(reservation.getTable().getId(), reservationDateTime)) {
-            reservationService.updateReservation(id, reservation);
-            return "redirect:/reservations";
+                                  @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                  @RequestParam(name = "time") @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
+                                  Model model) {
+        try {
+            LocalDateTime reservationDateTime = LocalDateTime.of(date, time);
+            reservation.setReservationTime(reservationDateTime);
+            
+            if (tableService.isTableAvailable(reservation.getTable().getId(), reservationDateTime)) {
+                reservationService.updateReservation(id, reservation);
+                return "redirect:/reservations";
+            }
+            model.addAttribute("error", "Selected table is not available at the specified time");
+            model.addAttribute("reservation", reservation);
+            model.addAttribute("availableTables", tableService.getAvailableTables());
+            return "reservations/form";
+        } catch (Exception e) {
+            model.addAttribute("error", "Error updating reservation: " + e.getMessage());
+            model.addAttribute("reservation", reservation);
+            model.addAttribute("availableTables", tableService.getAvailableTables());
+            return "reservations/form";
         }
-        return "redirect:/reservations/" + id + "/edit?error=table-unavailable";
     }
 
     @PostMapping("/{id}/delete")
-    public String deleteReservation(@PathVariable Long id) {
+    public String deleteReservation(@PathVariable("id") Long id) {
         reservationService.deleteReservation(id);
         return "redirect:/reservations";
     }
 
     @PostMapping("/{id}/status")
-    public String updateReservationStatus(@PathVariable Long id, @RequestParam Reservation.ReservationStatus status) {
+    public String updateReservationStatus(@PathVariable("id") Long id, @RequestParam(name = "status") Reservation.ReservationStatus status) {
         reservationService.updateReservationStatus(id, status);
         return "redirect:/reservations";
     }
