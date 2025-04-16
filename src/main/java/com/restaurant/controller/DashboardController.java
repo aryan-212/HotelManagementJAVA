@@ -51,10 +51,12 @@ public class DashboardController {
         // Get low stock items
         List<Inventory> lowStockItems = inventoryService.getLowStockItems();
 
-        // Get today's reservations
+        // Get today's reservations sorted by time
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
         LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
-        List<Reservation> todayReservations = reservationService.getReservationsByDateRange(startOfDay, endOfDay);
+        List<Reservation> todayReservations = reservationService.getReservationsByDateRange(startOfDay, endOfDay).stream()
+                .sorted((r1, r2) -> r1.getReservationTime().compareTo(r2.getReservationTime()))
+                .collect(Collectors.toList());
 
         // Add attributes to model
         model.addAttribute("recentOrders", recentOrders);

@@ -6,12 +6,16 @@ import com.restaurant.service.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class ReservationServiceImpl implements ReservationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReservationServiceImpl.class);
 
     @Autowired
     private ReservationRepository reservationRepository;
@@ -63,7 +67,10 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public List<Reservation> getReservationsByDateRange(LocalDateTime start, LocalDateTime end) {
-        return reservationRepository.findByReservationTimeBetween(start, end);
+        logger.info("Fetching reservations between {} and {}", start, end);
+        List<Reservation> reservations = reservationRepository.findByReservationTimeBetweenOrderByReservationTimeAsc(start, end);
+        logger.info("Found {} reservations", reservations.size());
+        return reservations;
     }
 
     @Override
