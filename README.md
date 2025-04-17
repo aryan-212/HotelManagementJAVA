@@ -1,81 +1,54 @@
 # Restaurant Management System
 
-A comprehensive web-based restaurant management system built with Spring Boot and Thymeleaf. The system helps restaurant staff manage tables, orders, menu items, inventory, and reservations efficiently.
+A comprehensive restaurant management system built with Spring Boot and Thymeleaf that helps manage tables, orders, menu items, inventory, and reservations.
 
 ## Features
 
-- **Dashboard**: View key metrics and recent activities
-- **Table Management**: Track table status and capacity
-- **Order Processing**: Create and manage customer orders
-- **Menu Management**: Maintain menu items and categories
-- **Inventory Tracking**: Monitor stock levels and manage inventory
-- **Reservation System**: Handle table reservations and availability
+- **Dashboard**: Overview of recent orders, available tables, low stock items, and today's reservations
+- **Table Management**: Track table status (available/occupied) and capacity
+- **Order Management**: Create and manage orders with multiple items
+- **Menu Management**: Add, edit, and remove menu items
+- **Inventory Management**: Track stock levels and low stock items
+- **Reservation System**: Manage table reservations
 
 ## Prerequisites
 
 - Java 17 or higher
 - Maven 3.6 or higher
-- MySQL 8.0 or higher
-- Git (optional, for cloning the repository)
+- MariaDB 10.6 or higher
+- Git (optional, for version control)
 
 ## Installation
 
-1. Clone the repository (if using Git):
-   ```bash
-   git clone <repository-url>
-   cd restaurant-management-system
-   ```
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd restaurant-management-system
+```
 
-2. Configure the database:
-   - Create a new MySQL database named `restaurant_db`
-   - Update the database configuration in `src/main/resources/application.properties`:
-     ```properties
-     spring.datasource.url=jdbc:mysql://localhost:3306/restaurant_db
-     spring.datasource.username=your_username
-     spring.datasource.password=your_password
-     ```
+2. Create a MariaDB database:
+```sql
+CREATE DATABASE restaurant_db;
+```
 
-3. Configure environment variables:
-   - Create a `.env` file in the root directory of the project
-   - Add the following environment variables:
-     ```properties
-     # Database Configuration
-     DB_URL=jdbc:mysql://localhost:3306/restaurant_db
-     DB_USERNAME=your_username
-     DB_PASSWORD=your_password
-
-     # Server Configuration
-     SERVER_PORT=8080
-     SPRING_PROFILES_ACTIVE=dev
-
-     # JWT Configuration (if using authentication)
-     JWT_SECRET=your_jwt_secret_key
-     JWT_EXPIRATION=86400000
-
-     # Email Configuration (if using email notifications)
-     SMTP_HOST=smtp.gmail.com
-     SMTP_PORT=587
-     SMTP_USERNAME=your_email@gmail.com
-     SMTP_PASSWORD=your_app_specific_password
-     ```
-   - Note: The `.env` file is ignored by git for security reasons. Make sure to keep your sensitive information secure and never commit this file to version control.
+3. Update database configuration in `src/main/resources/application.properties`:
+```properties
+spring.datasource.url=jdbc:mariadb://localhost:3306/restaurant_db?createDatabaseIfNotExist=true
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+```
 
 4. Build the project:
-   ```bash
-   mvn clean install
-   ```
+```bash
+mvn clean install
+```
 
-## Running the Application
+5. Run the application:
+```bash
+mvn spring-boot:run
+```
 
-1. Start the application:
-   ```bash
-   mvn spring-boot:run
-   ```
-
-2. Access the application:
-   - Open your web browser
-   - Navigate to `http://localhost:8080`
-   - The dashboard will be displayed as the home page
+The application will be available at `http://localhost:8080`
 
 ## Project Structure
 
@@ -83,69 +56,86 @@ A comprehensive web-based restaurant management system built with Spring Boot an
 src/
 ├── main/
 │   ├── java/
-│   │   └── com/
-│   │       └── restaurant/
-│   │           ├── controller/    # REST controllers
-│   │           ├── model/         # Entity classes
-│   │           ├── repository/    # Data access layer
-│   │           ├── service/       # Business logic
-│   │           └── RestaurantApplication.java
+│   │   └── com/restaurant/
+│   │       ├── controller/    # Web controllers
+│   │       ├── model/         # Entity classes
+│   │       ├── repository/    # JPA repositories
+│   │       ├── service/       # Business logic
+│   │       └── RestaurantApplication.java
 │   └── resources/
-│       ├── static/               # Static resources (CSS, JS)
-│       ├── templates/            # Thymeleaf templates
-│       └── application.properties # Application configuration
+│       ├── static/           # Static resources (CSS, JS)
+│       └── templates/        # Thymeleaf templates
 ```
 
-## Usage
+## Key Components
 
-1. **Dashboard**
-   - View pending orders, available tables, low stock items, and today's reservations
-   - Access quick actions for common tasks
+### Models
+- `RestaurantTable`: Represents dining tables with status and capacity
+- `Order`: Manages customer orders with items and status
+- `MenuItem`: Defines menu items with prices and descriptions
+- `OrderItem`: Links orders with menu items and quantities
+- `Reservation`: Handles table reservations
 
-2. **Tables**
-   - View all tables and their status
-   - Add new tables
-   - Update table status and capacity
+### Controllers
+- `DashboardController`: Handles dashboard view and statistics
+- `OrderController`: Manages order creation and updates
+- `TableController`: Handles table management
+- `MenuController`: Manages menu items
+- `ReservationController`: Handles reservations
 
-3. **Orders**
-   - Create new orders
-   - Track order status
-   - View order history
+### Services
+- `OrderService`: Business logic for order management
+- `TableService`: Table status and availability management
+- `MenuService`: Menu item operations
+- `ReservationService`: Reservation management
 
-4. **Menu**
-   - Manage menu items
-   - Update prices and availability
-   - Categorize items
+## Usage Guide
 
-5. **Inventory**
-   - Track stock levels
-   - Add new inventory items
-   - Set low stock alerts
+### Creating an Order
+1. Navigate to Orders > New Order
+2. Select menu items by clicking on them
+3. Enter customer details
+4. Select a table
+5. Click "Place Order"
 
-6. **Reservations**
-   - Create new reservations
-   - Check table availability
-   - Manage reservation status
+### Managing Tables
+1. Go to Tables
+2. View table status (available/occupied)
+3. Update table status as needed
 
-## Troubleshooting
+### Managing Menu
+1. Navigate to Menu
+2. Add new items with name, description, and price
+3. Edit or remove existing items
 
-1. **Port Already in Use**
-   - If port 8080 is already in use, you can either:
-     - Kill the existing process: `pkill java`
-     - Change the port in `application.properties`: `server.port=8081`
+### Managing Inventory
+1. Go to Inventory
+2. View current stock levels
+3. Update stock quantities
+4. Monitor low stock items
 
-2. **Database Connection Issues**
-   - Verify MySQL is running
-   - Check database credentials in `application.properties`
-   - Ensure the database exists
+### Managing Reservations
+1. Navigate to Reservations
+2. Create new reservations
+3. View upcoming reservations
+4. Update or cancel reservations
 
-3. **Build Failures**
-   - Clean and rebuild: `mvn clean install`
-   - Check Java version: `java -version`
-   - Verify Maven installation: `mvn -version`
+## Development
+
+### Adding New Features
+1. Create new entity classes in `model` package
+2. Add repository interfaces in `repository` package
+3. Implement service layer in `service` package
+4. Create controllers in `controller` package
+5. Add Thymeleaf templates in `templates` directory
+
+### Testing
+Run tests with:
+```bash
+mvn test
+```
 
 ## Contributing
-
 1. Fork the repository
 2. Create a feature branch
 3. Commit your changes
@@ -153,5 +143,7 @@ src/
 5. Create a Pull Request
 
 ## License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+## Support
+For support, please open an issue in the repository or contact the maintainers. 

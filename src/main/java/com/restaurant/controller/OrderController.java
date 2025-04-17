@@ -15,11 +15,13 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/orders")
@@ -82,7 +84,7 @@ public class OrderController {
 
     @PostMapping("/new")
     public String createOrder(@ModelAttribute Order order, 
-                            @RequestParam(value = "items", required = false) String itemsJson,
+                            @RequestParam(value = "itemsJson", required = false) String itemsJson,
                             @RequestParam(value = "tableId", required = false) Long tableId,
                             Model model) {
         try {
@@ -133,7 +135,7 @@ public class OrderController {
 
             // Parse and validate items
             String[] itemPairs = itemsJson.split("\\|");
-            double totalAmount = 0.0;
+            BigDecimal totalAmount = BigDecimal.ZERO;
 
             for (String itemPair : itemPairs) {
                 String[] parts = itemPair.split(",");
@@ -163,10 +165,10 @@ public class OrderController {
                 order.getItems().add(orderItem);
                 logger.info("Added order item: {}", orderItem);
 
-                totalAmount += orderItem.getSubtotal().doubleValue();
+                totalAmount = totalAmount.add(orderItem.getSubtotal());
             }
 
-            order.setTotalAmount(totalAmount);
+            order.setTotalAmount(totalAmount.doubleValue());
             logger.info("Order total amount: {}", totalAmount);
 
             // Update table status
@@ -217,5 +219,80 @@ public class OrderController {
     public String deleteOrder(@PathVariable("id") Long id) {
         orderService.deleteOrder(id);
         return "redirect:/orders";
+    }
+
+    @PostMapping("/api/orders")
+    public ResponseEntity<?> createOrder(@RequestBody Map<String, Object> request) {
+        try {
+            logger.info("Received order creation request: {}", request);
+            
+            // Validate required fields
+            if (!request.containsKey("tableId")) {
+                return ResponseEntity.badRequest().body("Table ID is required");
+            }
+            if (!request.containsKey("customerName")) {
+                return ResponseEntity.badRequest().body("Customer name is required");
+            }
+            if (!request.containsKey("items")) {
+                return ResponseEntity.badRequest().body("Order items are required");
+            }
+
+            // Get table
+            Long tableId = Long.parseLong(request.get("tableId").toString());
+            RestaurantTable table = tableService.getTableById(tableId);
+            if (table == null) {
+                return ResponseEntity.badRequest().body("Table not found");
+            }
+            if (table.getStatus() != RestaurantTable.TableStatus.AVAILABLE) {
+                return ResponseEntity.badRequest().body("Table is not available");
+            }
+
+            // Create order
+            Order order = new Order();
+            order.setTable(table);
+            order.setCustomerName(request.get("customerName").toString());
+            order.setCustomerPhone(request.get("customerPhone").toString());
+            order.setOrderTime(LocalDateTime.now());
+            order.setStatus(Order.OrderStatus.PENDING);
+
+            // Parse and add order items
+            List<Map<String, Object>> items = (List<Map<String, Object>>) request.get("items");
+            List<OrderItem> orderItems = new ArrayList<>();
+            BigDecimal totalAmount = BigDecimal.ZERO;
+
+            for (Map<String, Object> item : items) {
+                Long menuItemId = Long.parseLong(item.get("menuItemId").toString());
+                int quantity = Integer.parseInt(item.get("quantity").toString());
+
+                MenuItem menuItem = menuItemService.getMenuItemById(menuItemId);
+                if (menuItem == null) {
+                    return ResponseEntity.badRequest().body("Menu item not found: " + menuItemId);
+                }
+
+                OrderItem orderItem = new OrderItem();
+                orderItem.setMenuItem(menuItem);
+                orderItem.setQuantity(quantity);
+                orderItem.setOrder(order);
+                orderItems.add(orderItem);
+
+                totalAmount = totalAmount.add(menuItem.getPrice().multiply(new BigDecimal(quantity)));
+            }
+
+            order.setItems(orderItems);
+            order.setTotalAmount(totalAmount.doubleValue());
+
+            // Save order
+            Order savedOrder = orderService.createOrder(order);
+            logger.info("Order created successfully: {}", savedOrder);
+
+            // Update table status
+            table.setStatus(RestaurantTable.TableStatus.OCCUPIED);
+            tableService.updateTable(table);
+
+            return ResponseEntity.ok(savedOrder);
+        } catch (Exception e) {
+            logger.error("Error creating order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Error creating order: " + e.getMessage());
+        }
     }
 } 

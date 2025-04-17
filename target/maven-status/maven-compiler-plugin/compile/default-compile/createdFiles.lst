@@ -23,7 +23,6 @@ com/restaurant/model/RestaurantTable.class
 com/restaurant/model/OrderItem.class
 com/restaurant/RestaurantApplication.class
 com/restaurant/repository/RestaurantTableRepository.class
-com/restaurant/controller/OrderController.class
 com/restaurant/service/impl/RestaurantTableServiceImpl.class
 com/restaurant/model/Order$OrderStatus.class
 com/restaurant/model/MenuItem$Category.class

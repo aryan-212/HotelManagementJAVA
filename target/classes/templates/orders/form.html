@@ -248,7 +248,7 @@
             // Set the total amount
             document.getElementById('totalAmount').value = total.toFixed(2);
 
-            // Prepare items JSON
+            // Prepare items JSON in the format: menuItemId,quantity|menuItemId,quantity
             const itemsJson = selectedItems.map(item => `${item.id},${item.quantity}`).join('|');
             document.getElementById('itemsInput').value = itemsJson;
 

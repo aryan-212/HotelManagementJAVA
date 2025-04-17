@@ -37,13 +37,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Order createOrder(Order order) {
         try {
-            logger.info("Creating new order: {}", order);
+            logger.info("Starting order creation process");
+            logger.info("Order details before save: {}", order);
+            
+            // Ensure all required fields are set
+            if (order.getTable() == null) {
+                throw new IllegalArgumentException("Table is required");
+            }
+            if (order.getCustomerName() == null || order.getCustomerName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Customer name is required");
+            }
+            if (order.getCustomerPhone() == null || order.getCustomerPhone().trim().isEmpty()) {
+                throw new IllegalArgumentException("Customer phone is required");
+            }
+            
+            // Save the order
             Order savedOrder = orderRepository.save(order);
-            logger.info("Order created successfully with ID: {}", savedOrder.getId());
-            return savedOrder;
+            logger.info("Order saved successfully with ID: {}", savedOrder.getId());
+            
+            // Verify the order was saved
+            Order retrievedOrder = orderRepository.findById(savedOrder.getId())
+                    .orElseThrow(() -> new RuntimeException("Order not found after save"));
+            logger.info("Retrieved saved order: {}", retrievedOrder);
+            
+            return retrievedOrder;
         } catch (Exception e) {
             logger.error("Error creating order: {}", e.getMessage(), e);
             throw e;
