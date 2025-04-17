@@ -18,6 +18,90 @@ A comprehensive restaurant management system built with Spring Boot and Thymelea
 - MariaDB 10.6 or higher
 - Git (optional, for version control)
 
+## Setting up Development Environment on Linux
+
+### Installing Java 17
+
+1. Update package list:
+```bash
+sudo apt update
+```
+
+2. Install Java 17:
+```bash
+sudo apt install openjdk-17-jdk
+```
+
+3. Verify installation:
+```bash
+java -version
+```
+
+4. Set JAVA_HOME (add to ~/.bashrc or ~/.zshrc):
+```bash
+echo 'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' >> ~/.bashrc
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Installing Maven
+
+1. Download Maven (replace version number with latest stable):
+```bash
+wget https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
+```
+
+2. Extract Maven:
+```bash
+sudo tar -xvf apache-maven-3.9.6-bin.tar.gz -C /opt
+```
+
+3. Create symbolic link:
+```bash
+sudo ln -s /opt/apache-maven-3.9.6 /opt/maven
+```
+
+4. Set Maven environment variables (add to ~/.bashrc or ~/.zshrc):
+```bash
+echo 'export M2_HOME=/opt/maven' >> ~/.bashrc
+echo 'export MAVEN_HOME=/opt/maven' >> ~/.bashrc
+echo 'export PATH=${M2_HOME}/bin:${PATH}' >> ~/.bashrc
+source ~/.bashrc
+```
+
+5. Verify installation:
+```bash
+mvn -version
+```
+
+### Installing MariaDB
+
+1. Install MariaDB:
+```bash
+sudo apt install mariadb-server
+```
+
+2. Start MariaDB service:
+```bash
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
+```
+
+3. Secure MariaDB installation:
+```bash
+sudo mysql_secure_installation
+```
+
+4. Create database and user:
+```sql
+sudo mysql -u root -p
+CREATE DATABASE restaurant_db;
+CREATE USER 'restaurant_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON restaurant_db.* TO 'restaurant_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
 ## Installation
 
 1. Clone the repository:
@@ -26,24 +110,19 @@ git clone <repository-url>
 cd restaurant-management-system
 ```
 
-2. Create a MariaDB database:
-```sql
-CREATE DATABASE restaurant_db;
-```
-
-3. Update database configuration in `src/main/resources/application.properties`:
+2. Update database configuration in `src/main/resources/application.properties`:
 ```properties
 spring.datasource.url=jdbc:mariadb://localhost:3306/restaurant_db?createDatabaseIfNotExist=true
-spring.datasource.username=your_username
+spring.datasource.username=restaurant_user
 spring.datasource.password=your_password
 ```
 
-4. Build the project:
+3. Build the project:
 ```bash
 mvn clean install
 ```
 
-5. Run the application:
+4. Run the application:
 ```bash
 mvn spring-boot:run
 ```
