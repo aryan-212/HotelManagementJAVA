@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/restaurant_db
+      - SPRING_DATASOURCE_USERNAME=restaurant_user
+      - SPRING_DATASOURCE_PASSWORD=restaurant_password
+    depends_on:
+      - db
+    networks:
+      - restaurant-network
+
+  db:
+    image: mariadb:10.6
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=restaurant_db
+      - MYSQL_USER=restaurant_user
+      - MYSQL_PASSWORD=restaurant_password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - restaurant-network
+
+networks:
+  restaurant-network:
+    driver: bridge
+
+volumes:
+  mariadb_data: 

@@ -13,12 +13,68 @@ A comprehensive restaurant management system built with Spring Boot and Thymelea
 
 ## Prerequisites
 
+### Option 1: Local Development
 - Java 17 or higher
 - Maven 3.6 or higher
 - MariaDB 10.6 or higher
 - Git (optional, for version control)
 
+### Option 2: Docker Development
+- Docker
+- Docker Compose
+
+## Quick Start with Docker
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd restaurant-management-system
+```
+
+2. Build and start the containers:
+```bash
+docker-compose up --build
+```
+
+3. Access the application:
+- Web interface: http://localhost:8080
+- Database: localhost:3306
+
+4. Stop the containers:
+```bash
+docker-compose down
+```
+
 ## Setting up Development Environment on Linux
+
+### Installing Docker and Docker Compose
+
+1. Install Docker:
+```bash
+sudo apt update
+sudo apt install docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+2. Install Docker Compose:
+```bash
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+3. Verify installations:
+```bash
+docker --version
+docker-compose --version
+```
+
+4. Add your user to the docker group:
+```bash
+sudo usermod -aG docker $USER
+```
+
+### Local Development Setup (Alternative to Docker)
 
 ### Installing Java 17
 
@@ -201,28 +257,44 @@ src/
 
 ## Development
 
-### Adding New Features
-1. Create new entity classes in `model` package
-2. Add repository interfaces in `repository` package
-3. Implement service layer in `service` package
-4. Create controllers in `controller` package
-5. Add Thymeleaf templates in `templates` directory
+### Running with Docker
 
-### Testing
-Run tests with:
+1. Build and start the application:
 ```bash
-mvn test
+docker-compose up --build
 ```
 
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. View logs:
+```bash
+docker-compose logs -f
+```
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+3. Stop the application:
+```bash
+docker-compose down
+```
 
-## Support
-For support, please open an issue in the repository or contact the maintainers. 
+4. Rebuild and restart:
+```bash
+docker-compose up --build --force-recreate
+```
+
+### Database Management
+
+1. Access MariaDB container:
+```bash
+docker-compose exec db mysql -u restaurant_user -p
+```
+
+2. Backup database:
+```bash
+docker-compose exec db mysqldump -u restaurant_user -p restaurant_db > backup.sql
+```
+
+3. Restore database:
+```bash
+docker-compose exec -T db mysql -u restaurant_user -p restaurant_db < backup.sql
+```
+
+### Adding New Features
+1. Create new entity classes in `
